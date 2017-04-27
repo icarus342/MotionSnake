@@ -1,0 +1,58 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="edu.uw.tacoma.group14.motionsnake.Fragments.MainFragment"
+    android:tag="Main_Fragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+        <WebView
+        android:id="@+id/gif_view"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_gravity="right"
+            android:paddingLeft="100dp"    >
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Instruction"
+                android:id="@+id/instruction_button"/>
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Log in or Register"
+                android:id="@+id/Login_or_register_button"/>
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Play Game"
+                android:id="@+id/playgame_button"/>
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="See High Score"
+                android:id="@+id/see_high_score_button"/>
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Setting"
+                android:id="@+id/setting_button"/>
+            <Button
+                android:layout_width="200dp"
+                android:layout_height="wrap_content"
+                android:text="Sharing"
+                android:id="@+id/share"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="edu.uw.tacoma.group14.motionsnake.Fragments.Dialog.LogInDiag"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log in or Register to save your score! Please enter password corrrectly! This is one way ticket!!!"/>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:hint="enter userid"
+        android:id="@+id/userid_dialog"/>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:hint="enter password"
+        android:inputType="textPassword"
+        android:id="@+id/pwd_dialog"/>
+</LinearLayout>
