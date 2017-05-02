@@ -49,6 +49,11 @@ public class Bird {
         center = new Point((BIRD_SIZE / 2), (BIRD_SIZE / 2));
     }
 
+    /**
+     * Calculates the score of the bird based on its lifetime.
+     *
+     * @return The calculated score.
+     */
     public int getScore() {
         scoreSnapShot = (int) ((Math.log10(lifeTimer + 100)) / (Math.log10(0.991))) + 1010;
         return scoreSnapShot;

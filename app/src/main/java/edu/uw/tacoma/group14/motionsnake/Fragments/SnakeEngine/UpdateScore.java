@@ -1,16 +1,11 @@
 package edu.uw.tacoma.group14.motionsnake.Fragments.SnakeEngine;
 
-import android.app.Fragment;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -18,9 +13,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import edu.uw.tacoma.group14.motionsnake.Fragments.MainFragment;
-import edu.uw.tacoma.group14.motionsnake.R;
 
 /**
  * Created by sonvu on 5/31/2016.
@@ -99,6 +91,9 @@ public class UpdateScore {
 //        super.onCreate(savedInstanceState);
 //    }
 
+    /**
+     * Uploads the score to the php server
+     */
     public void UploadScore(){
         //Log.d("SONSON",""+R.string.LOGIN_PREFS);
 

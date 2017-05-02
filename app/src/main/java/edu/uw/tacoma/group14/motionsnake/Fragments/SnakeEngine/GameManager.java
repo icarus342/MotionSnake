@@ -47,6 +47,7 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
     public static final float MINIMUM_VELOCITY = 10;
     public static final float MAX_TURN_SPEED = 6; // in degrees per frame
     public static final int READY_PHASE_TIMER = 150;
+    public static final int CHICKEN_MAX_COUNT = 2;
 
     // Game Engine Variables
     Thread gameThread = null;
@@ -155,6 +156,10 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
         imageBird = BitmapFactory.decodeResource(this.getResources(), R.drawable.bird);
     }
 
+    /**
+     * picks random points to place tufts of grass for
+     * the background image.
+     */
     private void generateBackground() {
         int incWidth = screenSize.x / 4;
         int incHeight = screenSize.y / 3;
@@ -179,9 +184,36 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
         generateBackground();
         fps = 60;
 
-        // Walks player through set up of tilting phone
-        // to zero out the x axis.
         update();
+
+        runReadyScreen();
+
+        // Game's primary update/draw loop
+        Looper.prepare();
+        while (stillPlaying) {
+            long startFrameTime = System.currentTimeMillis();
+
+            // Update game's entity states (such as positions)
+            update();
+            // Draws the entities to the screen.
+            draw();
+
+            // Set fps factor based on how long device took
+            // to run update() and draw();
+            long frameLength = System.currentTimeMillis() - startFrameTime;
+            if (frameLength > 0) {
+                fps = 1000 / frameLength;
+            }
+        }
+    }
+
+    /**
+     * Runs the ready screen before the game starts.
+     * It waits for the user to have their device
+     * tilted near the zero'd angle to prepare the user
+     * for playing.
+     */
+    private void runReadyScreen() {
         readyScreen = true;
         boolean runningReadyCheckPhase = true;
         xAxisAcceleration = 2;
@@ -217,25 +249,6 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
         readyGetReady = false;
         readyGo = false;
         readyScreen = false;
-
-
-        // Game's primary update/draw loop
-        Looper.prepare();
-        while (stillPlaying) {
-            long startFrameTime = System.currentTimeMillis();
-
-            // Update game's entity states (such as positions)
-            update();
-            // Draws the entities to the screen.
-            draw();
-
-            // Set fps factor based on how long device took
-            // to run update() and draw();
-            long frameLength = System.currentTimeMillis() - startFrameTime;
-            if (frameLength > 0) {
-                fps = 1000 / frameLength;
-            }
-        }
     }
 
     /**
@@ -282,14 +295,23 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
         // Updates the snake's body
         mSnake.update();
 
-        // Spawn new Bird if no bird is present
-        if (birdList.size() < 2) {
+        // Spawn new Bird if max birds is not present
+        if (birdList.size() < CHICKEN_MAX_COUNT) {
             Bird temp = new Bird(imageBird);
             temp.spawnRandom(screenSize.x, screenSize.y);
             birdList.add(temp);
         }
 
-        // Check for collision for snake's head with any birds on screen.
+        checkBirdCollision();
+        checkSnakeCollision();
+
+    }
+
+    /**
+     * Check collision for snake's head with any
+     * birds on screen.
+     */
+    private void checkBirdCollision() {
         for (Bird b : birdList) {
             if (b.collision(mSnake.snakeCenter.x, mSnake.snakeCenter.y, Snake.SNAKE_RADIUS)) {
                 b.showScore = true;
@@ -307,9 +329,14 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
             }
             b.lifeTimer++;
         }
+    }
 
-        // Check for collision for snake's head with any part of the snake
-        // body that isn't the neck. (neck and closest body part doesn't check).
+    /**
+     * Check collision for snake's head with any part
+     * of the snake body that isn't the neck. (neck
+     * overlaps with head at all times)
+     */
+    private void checkSnakeCollision() {
         for (int i = 1; i < mSnake.snakeBody.size(); i++) {
             //Log.d("DEBUG", " Size:" + mSnake.snakeBody.size() + " Count:" + i);
             if (mSnake.snakeBody.get(i).collision(mSnake.snakeCenter.x, mSnake.snakeCenter.y, Snake.SNAKE_RADIUS)) {
@@ -326,7 +353,6 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
                 //gameOver = false;
             }
         }
-
     }
 
     /**
@@ -432,6 +458,7 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
             canvas.drawColor(Color.argb(255, 50, 120, 50));
 
 
+            // draw background grass tufts.
             for (int i = 0; i < backgroundList.size(); i++) {
                 //canvas.drawBitmap(imageGrassPatch, backgroundList.get(i).x, backgroundList.get(i).y, paint);
                 canvas.drawBitmap(imageGrassTuft, backgroundList.get(i).x, backgroundList.get(i).y, paint);
@@ -456,64 +483,12 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
                 canvas.drawText("Angle:" + mSnake.direction, 20, 370, paint);
             }
 
-            // Draw Tail before the body
-            if (debugMode) {
-                paint.setColor(Color.argb(255, 100, 255, 0));
-                canvas.drawCircle(mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).center.x,
-                        mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).center.y,
-                        Snake.SNAKE_RADIUS, paint);
-            } else {
-                canvas.drawBitmap(getRotatedImage(mSnake.bmpSnakeTail, mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getDirection()), mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getImageX(), mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getImageY(), paint);
-            }
-            // Draw the snake's body in reverse order (so there is proper layering).
-
-            for (int i = mSnake.snakeBody.size()-2; i >= 0; i--) {
-                if (debugMode) {
-                    canvas.drawCircle(mSnake.snakeBody.get(i).center.x,
-                            mSnake.snakeBody.get(i).center.y,
-                            Snake.SNAKE_RADIUS, paint);
-                }
-                canvas.drawBitmap(mSnake.bmpSnakeBody, mSnake.snakeBody.get(i).getImageX(), mSnake.snakeBody.get(i).getImageY(), paint);
-
-            }
-
-            // Draw the neck of the snake (connects the head and body).
-            paint.setColor(Color.argb(255, 147, 196, 245));
-            if (debugMode) {
-                canvas.drawCircle(mSnake.neckCenter.x, mSnake.neckCenter.y, Snake.SNAKE_RADIUS, paint);
-            }
-            canvas.drawBitmap(mSnake.bmpSnakeBody, mSnake.neckCenter.x - (Snake.SNAKE_SIZE/2), mSnake.neckCenter.y - (Snake.SNAKE_SIZE/2), paint);
-
-
-            // Draw the head of the snake.
-            paint.setColor(Color.argb(255, 249, 129, 0));
-            if (debugMode) {
-                canvas.drawCircle(mSnake.snakeCenter.x, mSnake.snakeCenter.y, Snake.SNAKE_RADIUS, paint);
-            }
-            canvas.drawBitmap(getRotatedImage(mSnake.bmpSnakeH, mSnake.direction), mSnake.snakeX, mSnake.snakeY, paint);
-
-            // Draw all the bird entities in the list
-            for (Bird b : birdList) {
-                if (debugMode) {
-                    canvas.drawCircle(b.center.x, b.center.y, Bird.BIRD_RADIUS, paint);
-                }
-                canvas.drawBitmap(b.bmpBird, b.x, b.y, paint);
-                if (b.showScore && !gameOver) {
-                    canvas.drawText(""+b.scoreSnapShot, b.scoreX, b.scoreY+50-(b.scoreTimer), paint);
-                }
-            }
-
-            // Draw the player's score to the screen.
-            paint.setTextSize(90);
-            canvas.drawText("Score:" + score,
-                    screenSize.x - 700, 80, paint);
-
-            // Draw game over message to the screen if the player triggers a game over.
-            if (gameOver) {
-                paint.setColor(Color.argb(255, 255, 64, 64));
-                paint.setTextSize(200);
-                canvas.drawText("GAME OVER", 800, 800, paint);
-            }
+            drawSnakeTail();
+            drawSnakeBody();
+            drawSnakeHead();
+            drawBirds();
+            drawScore();
+            if (gameOver) drawGameOver();
 
             if (readyScreen) {
                 drawReadySplash(canvas, paint);
@@ -521,6 +496,84 @@ class GameManager extends SurfaceView implements Runnable, SensorEventListener {
 
             ourHolder.unlockCanvasAndPost(canvas);
         }
+    }
+
+    /** Draw the tail of the snake. */
+    private void drawSnakeTail() {
+        if (debugMode) {
+            paint.setColor(Color.argb(255, 100, 255, 0));
+            canvas.drawCircle(mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).center.x,
+                    mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).center.y,
+                    Snake.SNAKE_RADIUS, paint);
+        } else {
+            canvas.drawBitmap(getRotatedImage(mSnake.bmpSnakeTail,
+                    mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getDirection()),
+                    mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getImageX(),
+                    mSnake.snakeBody.get(mSnake.snakeBody.size() - 1).getImageY(), paint);
+        }
+    }
+
+    /** Draw the snake's body in reverse order (enforce proper layering). */
+    private void drawSnakeBody() {
+        for (int i = mSnake.snakeBody.size()-2; i >= 0; i--) {
+            if (debugMode) {
+                canvas.drawCircle(mSnake.snakeBody.get(i).center.x,
+                        mSnake.snakeBody.get(i).center.y,
+                        Snake.SNAKE_RADIUS, paint);
+            }
+            canvas.drawBitmap(mSnake.bmpSnakeBody,
+                    mSnake.snakeBody.get(i).getImageX()
+                    , mSnake.snakeBody.get(i).getImageY(), paint);
+
+        }
+    }
+
+    /** Draw the head and neck of the snake. */
+    private void drawSnakeHead() {
+        // Draw the neck of the snake (connects the head and body).
+        paint.setColor(Color.argb(255, 147, 196, 245));
+        if (debugMode) {
+            canvas.drawCircle(mSnake.neckCenter.x, mSnake.neckCenter.y, Snake.SNAKE_RADIUS, paint);
+        }
+        canvas.drawBitmap(mSnake.bmpSnakeBody,
+                mSnake.neckCenter.x - (Snake.SNAKE_SIZE/2),
+                mSnake.neckCenter.y - (Snake.SNAKE_SIZE/2), paint);
+
+        // Draw the head now.
+        paint.setColor(Color.argb(255, 249, 129, 0));
+        if (debugMode) {
+            canvas.drawCircle(mSnake.snakeCenter.x,
+                    mSnake.snakeCenter.y,
+                    Snake.SNAKE_RADIUS, paint);
+        }
+        canvas.drawBitmap(getRotatedImage(mSnake.bmpSnakeH, mSnake.direction), mSnake.snakeX, mSnake.snakeY, paint);
+    }
+
+    /** Draw all the bird entities in the list */
+    private void drawBirds() {
+        for (Bird b : birdList) {
+            if (debugMode) {
+                canvas.drawCircle(b.center.x, b.center.y, Bird.BIRD_RADIUS, paint);
+            }
+            canvas.drawBitmap(b.bmpBird, b.x, b.y, paint);
+            if (b.showScore && !gameOver) {
+                canvas.drawText(""+b.scoreSnapShot, b.scoreX, b.scoreY+50-(b.scoreTimer), paint);
+            }
+        }
+    }
+
+    /** Draw the player's score to the screen. */
+    private void drawScore() {
+        paint.setTextSize(90);
+        canvas.drawText("Score:" + score,
+                screenSize.x - 700, 80, paint);
+    }
+
+    /** Draw game over message to the screen if the player triggers a game over. */
+    private void drawGameOver() {
+        paint.setColor(Color.argb(255, 255, 64, 64));
+        paint.setTextSize(200);
+        canvas.drawText("GAME OVER", 800, 800, paint);
     }
 
     /**
